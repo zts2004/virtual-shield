@@ -54,20 +54,31 @@
         function validatePassword(password) {
             const currentPassword = getCurrentPassword();
             console.log('当前密码：', currentPassword); // 添加调试信息
-            return password === currentPassword;
+            const isValid = password === currentPassword;
+            if (isValid) {
+                // 保存当前验证通过的密码
+                localStorage.setItem('lastPassword', currentPassword);
+            }
+            return isValid;
         }
 
         // 检查本地存储的验证状态
         function checkAuthStatus() {
             const authStatus = localStorage.getItem('authStatus');
             const authTime = localStorage.getItem('authTime');
-            if (authStatus === 'true' && authTime) {
+            const lastPassword = localStorage.getItem('lastPassword');
+            if (authStatus === 'true' && authTime && lastPassword) {
                 const now = new Date().getTime();
                 const authTimestamp = parseInt(authTime);
-                // 验证状态24小时有效
-                if (now - authTimestamp < 24 * 60 * 60 * 1000) {
+                // 验证状态24小时有效，且需要验证密码是否与当前日期匹配
+                if (now - authTimestamp < 24 * 60 * 60 * 1000 && lastPassword === getCurrentPassword()) {
                     showMainContent();
                     return true;
+                } else {
+                    // 清除过期或无效的验证状态
+                    localStorage.removeItem('authStatus');
+                    localStorage.removeItem('authTime');
+                    localStorage.removeItem('lastPassword');
                 }
             }
             return false;
