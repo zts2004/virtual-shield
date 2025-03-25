@@ -178,6 +178,10 @@
 
         // 初始化事件监听
         document.addEventListener('DOMContentLoaded', () => {
+            // 确保文件浏览器和预览窗口初始状态为隐藏
+            document.getElementById('fileExplorer').classList.add('hidden');
+            document.getElementById('filePreview').classList.add('hidden');
+
             if (!checkAuthStatus()) {
                 document.getElementById('authLayer').style.display = 'flex';
             }
@@ -189,6 +193,33 @@
             const backBtn = document.getElementById('backBtn');
             const closePreview = document.getElementById('closePreview');
 
+            // 返回按钮事件
+            backBtn.addEventListener('click', () => {
+                fileExplorer.classList.add('hidden');
+                document.getElementById('filePreview').classList.add('hidden');
+            });
+
+            // 关闭预览按钮事件
+            closePreview.addEventListener('click', () => {
+                document.getElementById('filePreview').classList.add('hidden');
+            });
+
+            // 文件按钮点击事件
+            document.querySelectorAll('.cyber-btn:not(.small)').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const path = btn.getAttribute('data-path');
+                    if (path) {
+                        const files = await fetchFileList(path);
+                        fileExplorer.classList.remove('hidden');
+                        document.getElementById('currentPath').textContent = path;
+                        displayFileList(files);
+                        // 确保文件预览窗口是隐藏的
+                        document.getElementById('filePreview').classList.add('hidden');
+                    }
+                });
+            });
+
+            // 密码验证事件
             submitBtn.addEventListener('click', () => {
                 if (isLocked) {
                     errorMsg.textContent = `系统已锁定，请等待${Math.ceil((LOCK_TIME - (Date.now() - lockStartTime)) / 1000)}秒`;
@@ -200,6 +231,9 @@
                     localStorage.setItem('authStatus', 'true');
                     localStorage.setItem('authTime', Date.now().toString());
                     showMainContent();
+                    // 确保文件浏览器和预览窗口是隐藏的
+                    fileExplorer.classList.add('hidden');
+                    document.getElementById('filePreview').classList.add('hidden');
                 } else {
                     loginAttempts++;
                     errorMsg.textContent = `密码错误，剩余尝试次数：${MAX_ATTEMPTS - loginAttempts}`;
@@ -215,28 +249,6 @@
                         }, LOCK_TIME);
                     }
                 }
-            });
-
-            // 文件按钮点击事件
-            document.querySelectorAll('.cyber-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const path = btn.getAttribute('data-path');
-                    const files = await fetchFileList(path);
-                    fileExplorer.classList.remove('hidden');
-                    document.getElementById('currentPath').textContent = path;
-                    displayFileList(files);
-                });
-            });
-
-            // 返回按钮事件
-            backBtn.addEventListener('click', () => {
-                fileExplorer.classList.add('hidden');
-                document.getElementById('filePreview').classList.add('hidden');
-            });
-
-            // 关闭预览按钮事件
-            closePreview.addEventListener('click', () => {
-                document.getElementById('filePreview').classList.add('hidden');
             });
         });
 
