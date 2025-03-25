@@ -32,39 +32,18 @@
             <button class="cyber-btn" data-path="files/附件四">附件四</button>
             <button class="cyber-btn" data-path="files/视频">视频</button>
         </div>
-        
-        <!-- 文件浏览器 -->
-        <div id="fileExplorer" class="file-explorer hidden">
-            <div class="file-explorer-header">
-                <h2 id="currentPath">文件浏览器</h2>
-                <button id="backBtn" class="cyber-btn small">返回</button>
-            </div>
-            <div id="fileList" class="file-list"></div>
-        </div>
-
-        <!-- 文件预览 -->
-        <div id="filePreview" class="file-preview hidden">
-            <div class="preview-header">
-                <h3 id="previewFileName">文件预览</h3>
-                <button id="closePreview" class="cyber-btn small">关闭</button>
-            </div>
-            <div id="previewContent" class="preview-content"></div>
-        </div>
     </div>
 
     <script>
-        // GitHub API配置
-        const GITHUB_API_BASE = 'https://api.github.com/repos/zts2004/virtual-shield/contents/';
-        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/zts2004/virtual-shield/main/';
-
         // 密码验证相关变量
         let loginAttempts = 0;
         const MAX_ATTEMPTS = 3;
-        const LOCK_TIME = 15000;
+        const LOCK_TIME = 15000; // 15秒锁定时间
         let isLocked = false;
 
         // 获取当前日期密码
         function getCurrentPassword() {
+            // 直接使用本地时间，因为系统时间应该已经是正确的
             const now = new Date();
             return now.getFullYear().toString() +
                    String(now.getMonth() + 1).padStart(2, '0') +
@@ -74,7 +53,7 @@
         // 验证密码
         function validatePassword(password) {
             const currentPassword = getCurrentPassword();
-            console.log('当前密码：', currentPassword);
+            console.log('当前密码：', currentPassword); // 添加调试信息
             return password === currentPassword;
         }
 
@@ -85,7 +64,9 @@
             if (authStatus === 'true' && authTime) {
                 const now = new Date().getTime();
                 const authTimestamp = parseInt(authTime);
+                // 验证状态24小时有效
                 if (now - authTimestamp < 24 * 60 * 60 * 1000) {
+                    showMainContent();
                     return true;
                 }
             }
@@ -96,141 +77,22 @@
         function showMainContent() {
             document.getElementById('authLayer').style.display = 'none';
             document.getElementById('mainContent').classList.remove('hidden');
-            // 确保文件浏览器和预览窗口是隐藏的
-            document.getElementById('fileExplorer').classList.add('hidden');
-            document.getElementById('filePreview').classList.add('hidden');
-        }
-
-        // 获取文件列表
-        async function fetchFileList(path) {
-            try {
-                const response = await fetch(GITHUB_API_BASE + path);
-                if (!response.ok) throw new Error('获取文件列表失败');
-                return await response.json();
-            } catch (error) {
-                console.error('获取文件列表错误:', error);
-                return [];
-            }
-        }
-
-        // 获取文件内容
-        async function fetchFileContent(path) {
-            try {
-                const response = await fetch(GITHUB_RAW_BASE + path);
-                if (!response.ok) throw new Error('获取文件内容失败');
-                return await response.text();
-            } catch (error) {
-                console.error('获取文件内容错误:', error);
-                return '无法加载文件内容';
-            }
-        }
-
-        // 显示文件列表
-        function displayFileList(files) {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '';
-            
-            files.forEach(file => {
-                const item = document.createElement('div');
-                item.className = 'file-item';
-                item.innerHTML = `
-                    <span class="file-icon">${file.type === 'dir' ? '📁' : '📄'}</span>
-                    <span class="file-name">${file.name}</span>
-                `;
-                
-                item.addEventListener('click', async () => {
-                    if (file.type === 'dir') {
-                        const files = await fetchFileList(file.path);
-                        displayFileList(files);
-                        document.getElementById('currentPath').textContent = file.path;
-                    } else {
-                        const content = await fetchFileContent(file.path);
-                        showFilePreview(file.name, content);
-                    }
-                });
-                
-                fileList.appendChild(item);
-            });
-        }
-
-        // 显示文件预览
-        function showFilePreview(fileName, content) {
-            const preview = document.getElementById('filePreview');
-            const previewFileName = document.getElementById('previewFileName');
-            const previewContent = document.getElementById('previewContent');
-            
-            previewFileName.textContent = fileName;
-            
-            // 根据文件类型显示不同的预览
-            if (fileName.match(/\.(jpg|jpeg|png|gif)$/i)) {
-                previewContent.innerHTML = `<img src="${GITHUB_RAW_BASE}${fileName}" alt="${fileName}">`;
-            } else if (fileName.match(/\.(mp4|webm)$/i)) {
-                previewContent.innerHTML = `
-                    <video controls>
-                        <source src="${GITHUB_RAW_BASE}${fileName}" type="video/${fileName.split('.').pop()}">
-                        您的浏览器不支持视频播放
-                    </video>
-                `;
-            } else {
-                previewContent.innerHTML = `<pre>${content}</pre>`;
-            }
-            
-            preview.classList.remove('hidden');
         }
 
         // 初始化事件监听
         document.addEventListener('DOMContentLoaded', () => {
-            // 初始化界面状态
-            const authLayer = document.getElementById('authLayer');
-            const mainContent = document.getElementById('mainContent');
-            const fileExplorer = document.getElementById('fileExplorer');
-            const filePreview = document.getElementById('filePreview');
-
-            // 确保所有界面初始都是隐藏的
-            mainContent.classList.add('hidden');
-            fileExplorer.classList.add('hidden');
-            filePreview.classList.add('hidden');
-
             // 检查验证状态
-            if (checkAuthStatus()) {
-                showMainContent();
+            if (!checkAuthStatus()) {
+                document.getElementById('authLayer').style.display = 'flex';
             } else {
-                authLayer.style.display = 'flex';
+                showMainContent();
             }
 
+            // 密码输入框事件
             const passwordInput = document.getElementById('passwordInput');
             const submitBtn = document.getElementById('submitBtn');
             const errorMsg = document.getElementById('errorMsg');
-            const backBtn = document.getElementById('backBtn');
-            const closePreview = document.getElementById('closePreview');
 
-            // 返回按钮事件
-            backBtn.addEventListener('click', () => {
-                fileExplorer.classList.add('hidden');
-                document.getElementById('filePreview').classList.add('hidden');
-            });
-
-            // 关闭预览按钮事件
-            closePreview.addEventListener('click', () => {
-                document.getElementById('filePreview').classList.add('hidden');
-            });
-
-            // 文件按钮点击事件
-            document.querySelectorAll('.cyber-btn:not(.small)').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const path = btn.getAttribute('data-path');
-                    if (path) {
-                        const files = await fetchFileList(path);
-                        fileExplorer.classList.remove('hidden');
-                        document.getElementById('currentPath').textContent = path;
-                        displayFileList(files);
-                        // 确保文件预览窗口是隐藏的
-                        document.getElementById('filePreview').classList.add('hidden');
-                    }
-                });
-            });
-
-            // 密码验证事件
             submitBtn.addEventListener('click', () => {
                 if (isLocked) {
                     errorMsg.textContent = `系统已锁定，请等待${Math.ceil((LOCK_TIME - (Date.now() - lockStartTime)) / 1000)}秒`;
@@ -242,9 +104,6 @@
                     localStorage.setItem('authStatus', 'true');
                     localStorage.setItem('authTime', Date.now().toString());
                     showMainContent();
-                    // 确保文件浏览器和预览窗口是隐藏的
-                    fileExplorer.classList.add('hidden');
-                    document.getElementById('filePreview').classList.add('hidden');
                 } else {
                     loginAttempts++;
                     errorMsg.textContent = `密码错误，剩余尝试次数：${MAX_ATTEMPTS - loginAttempts}`;
@@ -260,6 +119,16 @@
                         }, LOCK_TIME);
                     }
                 }
+            });
+
+            // 文件按钮点击事件
+            document.querySelectorAll('.cyber-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const path = btn.getAttribute('data-path');
+                    // 修改为访问GitHub仓库中的文件
+                    const githubPath = `https://github.com/zts2004/virtual-shield/tree/main/${path}`;
+                    window.open(githubPath, '_blank');
+                });
             });
         });
 
