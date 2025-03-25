@@ -3,33 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>虚境火盾</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>虚境火盾 - 安全文件访问系统</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <!-- 引入科幻字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 密码验证界面 -->
-    <div id="password-screen" class="screen">
-        <div class="password-container">
-            <h2>请输入访问密码</h2>
-            <input type="password" id="password-input" placeholder="请输入密码">
-            <button onclick="verifyPassword()">确认</button>
+    <!-- 背景Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- 密码验证层 -->
+    <div id="authLayer" class="auth-layer">
+        <div class="auth-box">
+            <h2>安全验证</h2>
+            <input type="password" id="passwordInput" placeholder="请输入访问密码" maxlength="8">
+            <button id="submitBtn">验证</button>
+            <div id="errorMsg" class="error-msg"></div>
         </div>
     </div>
 
-    <!-- 主界面 -->
-    <div id="main-screen" class="screen hidden">
-        <div class="container">
-            <h1 class="title">虚境火盾</h1>
-            <div class="button-container">
-                <button class="function-btn" onclick="openFile('附件一')">附件一</button>
-                <button class="function-btn" onclick="openFile('附件二')">附件二</button>
-                <button class="function-btn" onclick="openFile('附件三')">附件三</button>
-                <button class="function-btn" onclick="openFile('附件四')">附件四</button>
-                <button class="function-btn" onclick="openFile('视频')">视频</button>
-            </div>
+    <!-- 主要内容区 -->
+    <div id="mainContent" class="main-content hidden">
+        <h1 class="title">虚境火盾</h1>
+        <div class="button-container">
+            <button class="cyber-btn" data-path="files/附件一">附件一</button>
+            <button class="cyber-btn" data-path="files/附件二">附件二</button>
+            <button class="cyber-btn" data-path="files/附件三">附件三</button>
+            <button class="cyber-btn" data-path="files/附件四">附件四</button>
+            <button class="cyber-btn" data-path="files/视频">视频</button>
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script>
+        // 密码验证相关变量
+        let loginAttempts = 0;
+        const MAX_ATTEMPTS = 3;
+        const LOCK_TIME = 15000; // 15秒锁定时间
+        let isLocked = false;
+
+        // 获取当前日期密码
+        function getCurrentPassword() {
+            // 直接使用本地时间，因为系统时间应该已经是正确的
+            const now = new Date();
+            return now.getFullYear().toString() +
+                   String(now.getMonth() + 1).padStart(2, '0') +
+                   String(now.getDate()).padStart(2, '0');
+        }
+
+        // 验证密码
+        function validatePassword(password) {
+            const currentPassword = getCurrentPassword();
+            console.log('当前密码：', currentPassword); // 添加调试信息
+            return password === currentPassword;
+        }
+
+        // 检查本地存储的验证状态
+        function checkAuthStatus() {
+            const authStatus = localStorage.getItem('authStatus');
+            const authTime = localStorage.getItem('authTime');
+            if (authStatus === 'true' && authTime) {
+                const now = new Date().getTime();
+                const authTimestamp = parseInt(authTime);
+                // 验证状态24小时有效
+                if (now - authTimestamp < 24 * 60 * 60 * 1000) {
+                    showMainContent();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 显示主内容
+        function showMainContent() {
+            document.getElementById('authLayer').style.display = 'none';
+            document.getElementById('mainContent').classList.remove('hidden');
+        }
+
+        // 初始化事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            // 检查验证状态
+            if (!checkAuthStatus()) {
+                document.getElementById('authLayer').style.display = 'flex';
+            } else {
+                showMainContent();
+            }
+
+            // 密码输入框事件
+            const passwordInput = document.getElementById('passwordInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            submitBtn.addEventListener('click', () => {
+                if (isLocked) {
+                    errorMsg.textContent = `系统已锁定，请等待${Math.ceil((LOCK_TIME - (Date.now() - lockStartTime)) / 1000)}秒`;
+                    return;
+                }
+
+                const password = passwordInput.value;
+                if (validatePassword(password)) {
+                    localStorage.setItem('authStatus', 'true');
+                    localStorage.setItem('authTime', Date.now().toString());
+                    showMainContent();
+                } else {
+                    loginAttempts++;
+                    errorMsg.textContent = `密码错误，剩余尝试次数：${MAX_ATTEMPTS - loginAttempts}`;
+                    
+                    if (loginAttempts >= MAX_ATTEMPTS) {
+                        isLocked = true;
+                        const lockStartTime = Date.now();
+                        errorMsg.textContent = `系统已锁定，请等待15秒`;
+                        setTimeout(() => {
+                            isLocked = false;
+                            loginAttempts = 0;
+                            errorMsg.textContent = '';
+                        }, LOCK_TIME);
+                    }
+                }
+            });
+
+            // 文件按钮点击事件
+            document.querySelectorAll('.cyber-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const path = btn.getAttribute('data-path');
+                    window.open(path, '_blank');
+                });
+            });
+        });
+
+        // Canvas背景动画
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 设置Canvas尺寸
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 粒子系统
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 创建粒子
+        const particles = Array.from({ length: 100 }, () => new Particle());
+
+        // 动画循环
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
 </body>
 </html> 
