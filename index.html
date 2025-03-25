@@ -125,7 +125,9 @@
             document.querySelectorAll('.cyber-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const path = btn.getAttribute('data-path');
-                    window.open(path, '_blank');
+                    // 修改为访问GitHub仓库中的文件
+                    const githubPath = `https://github.com/zts2004/virtual-shield/tree/main/${path}`;
+                    window.open(githubPath, '_blank');
                 });
             });
         });
