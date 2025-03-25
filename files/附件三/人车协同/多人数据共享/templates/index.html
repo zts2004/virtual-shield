@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树莓派小车控制系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>树莓派小车控制系统</h1>
+            <div class="user-info">
+                当前用户：<span id="current-user">{{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">退出</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                <div class="status-panel">
+                    <h2>状态信息</h2>
+                    <div id="conflict-status" class="status-item">
+                        <span class="status-label">冲突状态：</span>
+                        <span class="status-value" id="conflict-value">无</span>
+                    </div>
+                    <div id="command-status" class="status-item">
+                        <span class="status-label">指令状态：</span>
+                        <span class="status-value" id="command-value">待机</span>
+                    </div>
+                </div>
+
+                <div class="control-buttons">
+                    <h2>控制面板</h2>
+                    <div class="button-grid">
+                        <button id="forward" class="control-btn">前进</button>
+                        <button id="backward" class="control-btn">后退</button>
+                        <button id="left" class="control-btn">左转</button>
+                        <button id="right" class="control-btn">右转</button>
+                        <button id="stop" class="control-btn">停止</button>
+                    </div>
+                </div>
+
+                <div class="coordinate-input">
+                    <h2>坐标控制</h2>
+                    <div class="input-group">
+                        <label for="x-coord">X坐标：</label>
+                        <input type="number" id="x-coord" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="y-coord">Y坐标：</label>
+                        <input type="number" id="y-coord" step="0.1">
+                    </div>
+                    <button id="go-to-coord" class="control-btn">移动到指定位置</button>
+                </div>
+            </div>
+
+            <div class="conflict-panel" id="conflict-panel" style="display: none;">
+                <h2>冲突处理</h2>
+                <div class="conflict-info">
+                    <p>检测到指令冲突，请投票：</p>
+                    <div class="vote-options">
+                        <button class="vote-btn" data-vote="accept">接受</button>
+                        <button class="vote-btn" data-vote="reject">拒绝</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

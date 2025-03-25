@@ -1,0 +1,12 @@
+[
+    {
+        "name": "示例文件1.pdf",
+        "path": "示例文件1.pdf",
+        "type": "pdf"
+    },
+    {
+        "name": "示例图片1.jpg",
+        "path": "示例图片1.jpg",
+        "type": "jpg"
+    }
+] 

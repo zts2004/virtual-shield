@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚境火盾</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 密码验证界面 -->
+    <div id="password-screen" class="screen">
+        <div class="password-container">
+            <h2>请输入访问密码</h2>
+            <input type="password" id="password-input" placeholder="请输入密码">
+            <button onclick="verifyPassword()">确认</button>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="main-screen" class="screen hidden">
+        <div class="container">
+            <h1 class="title">虚境火盾</h1>
+            <div class="button-container">
+                <button class="function-btn" onclick="openFile('附件一')">附件一</button>
+                <button class="function-btn" onclick="openFile('附件二')">附件二</button>
+                <button class="function-btn" onclick="openFile('附件三')">附件三</button>
+                <button class="function-btn" onclick="openFile('附件四')">附件四</button>
+                <button class="function-btn" onclick="openFile('视频')">视频</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html> 
