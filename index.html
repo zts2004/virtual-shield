@@ -86,7 +86,6 @@
                 const now = new Date().getTime();
                 const authTimestamp = parseInt(authTime);
                 if (now - authTimestamp < 24 * 60 * 60 * 1000) {
-                    showMainContent();
                     return true;
                 }
             }
@@ -97,6 +96,9 @@
         function showMainContent() {
             document.getElementById('authLayer').style.display = 'none';
             document.getElementById('mainContent').classList.remove('hidden');
+            // 确保文件浏览器和预览窗口是隐藏的
+            document.getElementById('fileExplorer').classList.add('hidden');
+            document.getElementById('filePreview').classList.add('hidden');
         }
 
         // 获取文件列表
@@ -178,18 +180,27 @@
 
         // 初始化事件监听
         document.addEventListener('DOMContentLoaded', () => {
-            // 确保文件浏览器和预览窗口初始状态为隐藏
-            document.getElementById('fileExplorer').classList.add('hidden');
-            document.getElementById('filePreview').classList.add('hidden');
+            // 初始化界面状态
+            const authLayer = document.getElementById('authLayer');
+            const mainContent = document.getElementById('mainContent');
+            const fileExplorer = document.getElementById('fileExplorer');
+            const filePreview = document.getElementById('filePreview');
 
-            if (!checkAuthStatus()) {
-                document.getElementById('authLayer').style.display = 'flex';
+            // 确保所有界面初始都是隐藏的
+            mainContent.classList.add('hidden');
+            fileExplorer.classList.add('hidden');
+            filePreview.classList.add('hidden');
+
+            // 检查验证状态
+            if (checkAuthStatus()) {
+                showMainContent();
+            } else {
+                authLayer.style.display = 'flex';
             }
 
             const passwordInput = document.getElementById('passwordInput');
             const submitBtn = document.getElementById('submitBtn');
             const errorMsg = document.getElementById('errorMsg');
-            const fileExplorer = document.getElementById('fileExplorer');
             const backBtn = document.getElementById('backBtn');
             const closePreview = document.getElementById('closePreview');
 
